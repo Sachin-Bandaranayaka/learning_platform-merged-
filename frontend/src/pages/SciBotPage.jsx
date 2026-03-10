@@ -23,6 +23,7 @@ import {
     Bolt,
     ExternalLink,
     Volume2,
+    BarChart2,
 } from "lucide-react";
 import ChatBox from "../components/ChatBox";
 
@@ -53,6 +54,10 @@ export default function SciBotPage() {
 
     // Optional: UI-only state (does not change your video logic)
     const [isMutedHint, setIsMutedHint] = useState(false);
+
+    // Graphs / Model Reports
+    const [graphs, setGraphs] = useState([]);
+    const [graphsLoading, setGraphsLoading] = useState(false);
 
     const isDark = theme === "dark";
     const isBlue = theme === "blue";
@@ -173,6 +178,16 @@ export default function SciBotPage() {
             playerRef.current = null;
         };
     }, [videoId]);
+
+    // Fetch available graph reports
+    useEffect(() => {
+        setGraphsLoading(true);
+        fetch("/api/scibot/graphs")
+            .then((res) => res.json())
+            .then((data) => setGraphs(data?.graphs || []))
+            .catch(() => setGraphs([]))
+            .finally(() => setGraphsLoading(false));
+    }, []);
 
     // =========================
     // THEME TOKENS (pro UI)
@@ -307,8 +322,8 @@ export default function SciBotPage() {
                             <button
                                 onClick={() => setTheme("light")}
                                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all duration-300 hover:scale-105 ${theme === "light"
-                                        ? "border-blue-500 bg-blue-500 text-white shadow-lg shadow-blue-500/30"
-                                        : "border-slate-300/30 hover:border-blue-400 hover:bg-blue-50/10"
+                                    ? "border-blue-500 bg-blue-500 text-white shadow-lg shadow-blue-500/30"
+                                    : "border-slate-300/30 hover:border-blue-400 hover:bg-blue-50/10"
                                     }`}
                                 aria-label="Switch to light theme"
                             >
@@ -319,8 +334,8 @@ export default function SciBotPage() {
                             <button
                                 onClick={() => setTheme("dark")}
                                 className={`flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all duration-300 hover:scale-105 ${theme === "dark"
-                                        ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
-                                        : "border-slate-300/30 hover:border-emerald-400 hover:bg-emerald-50/10"
+                                    ? "border-emerald-500 bg-emerald-500 text-white shadow-lg shadow-emerald-500/30"
+                                    : "border-slate-300/30 hover:border-emerald-400 hover:bg-emerald-50/10"
                                     }`}
                                 aria-label="Switch to dark theme"
                             >
@@ -331,8 +346,8 @@ export default function SciBotPage() {
                             <button
                                 onClick={() => setTheme("blue")}
                                 className={`hidden sm:flex items-center gap-1.5 px-3 py-2 rounded-xl border text-xs font-semibold transition-all duration-300 hover:scale-105 ${theme === "blue"
-                                        ? "border-indigo-400 bg-indigo-500 text-white shadow-lg shadow-indigo-500/30"
-                                        : "border-slate-300/30 hover:border-indigo-400 hover:bg-indigo-50/10"
+                                    ? "border-indigo-400 bg-indigo-500 text-white shadow-lg shadow-indigo-500/30"
+                                    : "border-slate-300/30 hover:border-indigo-400 hover:bg-indigo-50/10"
                                     }`}
                                 aria-label="Switch to blue theme"
                             >
@@ -514,8 +529,8 @@ export default function SciBotPage() {
 
                         <textarea
                             className={`w-full h-56 p-4 rounded-2xl border-2 text-sm outline-none transition-all duration-300 resize-none ${ringFocus} ${theme === "light"
-                                    ? "bg-gray-50 border-gray-200 text-slate-900 placeholder:text-gray-400"
-                                    : "bg-slate-950/30 border-slate-700 text-white placeholder:text-slate-400"
+                                ? "bg-gray-50 border-gray-200 text-slate-900 placeholder:text-gray-400"
+                                : "bg-slate-950/30 border-slate-700 text-white placeholder:text-slate-400"
                                 }`}
                             value={notes}
                             onChange={(e) => setNotes(e.target.value)}
@@ -545,6 +560,58 @@ export default function SciBotPage() {
                                 </button>
                             </div>
                         </div>
+                    </section>
+
+                    {/* MODEL REPORTS / GRAPHS */}
+                    <section className={`${cardBase} rounded-3xl p-5 sm:p-6`}>
+                        <div className="flex items-center justify-between gap-3 mb-4">
+                            <h3 className={`text-lg font-extrabold flex items-center gap-2 ${mainText}`}>
+                                <BarChart2 className={theme === "light" ? "text-purple-600" : "text-purple-300"} size={22} />
+                                Model Reports
+                            </h3>
+                            <span className={`${subtleText} text-xs bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full`}>
+                                {graphs.length} graphs
+                            </span>
+                        </div>
+
+                        {graphsLoading ? (
+                            <div className={`text-center py-8 ${subtleText}`}>
+                                <RefreshCw className="animate-spin mx-auto mb-2" size={24} />
+                                <p className="text-sm">Loading graphs...</p>
+                            </div>
+                        ) : graphs.length === 0 ? (
+                            <div className={`text-center py-8 ${subtleText}`}>
+                                <BarChart2 className="mx-auto mb-3 opacity-40" size={40} />
+                                <p className="text-sm font-semibold mb-1">No graphs generated yet</p>
+                                <p className="text-xs opacity-75">
+                                    Run <code className="bg-black/10 px-1.5 py-0.5 rounded text-xs">python -m scibot.generate_graphs</code> in the backend to generate model report graphs.
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {graphs.map((filename, i) => (
+                                    <div
+                                        key={i}
+                                        className={`rounded-2xl overflow-hidden border group cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${theme === "light"
+                                                ? "border-gray-200 bg-white"
+                                                : "border-slate-700 bg-slate-900/40"
+                                            }`}
+                                    >
+                                        <img
+                                            src={`/api/scibot/graphs/${filename}`}
+                                            alt={filename.replace(/[_-]/g, " ").replace(".png", "")}
+                                            className="w-full h-auto"
+                                            loading="lazy"
+                                        />
+                                        <div className="px-3 py-2">
+                                            <p className={`text-xs font-semibold truncate ${mainText}`}>
+                                                {filename.replace(/[_-]/g, " ").replace(".png", "")}
+                                            </p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </section>
                 </div>
 
@@ -596,8 +663,8 @@ export default function SciBotPage() {
                                     <button
                                         key={i}
                                         className={`w-full px-4 py-3 rounded-2xl text-left flex items-center justify-between gap-3 group transition-all duration-300 hover:scale-[1.02] hover:shadow-lg ${theme === "light"
-                                                ? "bg-white border border-gray-200 hover:border-blue-300"
-                                                : "bg-slate-900/30 border border-slate-700 hover:border-blue-500/40"
+                                            ? "bg-white border border-gray-200 hover:border-blue-300"
+                                            : "bg-slate-900/30 border border-slate-700 hover:border-blue-500/40"
                                             }`}
                                         type="button"
                                     >
@@ -631,8 +698,8 @@ export default function SciBotPage() {
                                     <div
                                         key={i}
                                         className={`flex items-center justify-between gap-3 px-4 py-3 rounded-2xl border hover:scale-[1.01] transition-transform cursor-pointer ${theme === "light"
-                                                ? "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-blue-500/20"
-                                                : "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-blue-500/20"
+                                            ? "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-blue-500/20"
+                                            : "bg-gradient-to-r from-blue-500/10 to-indigo-500/10 border-blue-500/20"
                                             }`}
                                     >
                                         <div className="flex items-center gap-3">
@@ -644,8 +711,8 @@ export default function SciBotPage() {
 
                                         <span
                                             className={`text-[11px] font-extrabold px-2.5 py-1 rounded-full border ${theme === "light"
-                                                    ? "bg-white/70 border-gray-200 text-slate-800"
-                                                    : "bg-slate-900/40 border-slate-700 text-slate-200"
+                                                ? "bg-white/70 border-gray-200 text-slate-800"
+                                                : "bg-slate-900/40 border-slate-700 text-slate-200"
                                                 }`}
                                         >
                                             {concept.tag}

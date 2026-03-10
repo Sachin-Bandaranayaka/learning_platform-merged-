@@ -12,6 +12,11 @@ numpy>=1.26.0
 pandas>=2.0.0
 scikit-learn>=1.3.0
 pypdf>=3.0.0
+matplotlib>=3.7.0
+
+# SciBot LLM (natural answer generation)
+transformers>=4.35.0
+torch>=2.0.0
 
 # Voice Module Dependencies
 scipy>=1.10.0
@@ -27,3 +32,4 @@ requests>=2.31.0
 
 # Development
 pytest>=6.2.0
+

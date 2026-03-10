@@ -87,6 +87,22 @@ def create_app():
             except Exception as e:
                 return jsonify({"error": str(e)}), 500
 
+        # Serve SciBot graph report images
+        SCIBOT_GRAPHS_DIR = os.path.join(os.path.dirname(__file__), 'scibot', 'graph_reports')
+
+        @app.route('/api/scibot/graphs', methods=['GET'])
+        def scibot_list_graphs():
+            """List available graph report images."""
+            if not os.path.isdir(SCIBOT_GRAPHS_DIR):
+                return jsonify({"graphs": []})
+            pngs = sorted([f for f in os.listdir(SCIBOT_GRAPHS_DIR) if f.endswith('.png')])
+            return jsonify({"graphs": pngs})
+
+        @app.route('/api/scibot/graphs/<path:filename>', methods=['GET'])
+        def scibot_serve_graph(filename):
+            """Serve a specific graph image."""
+            return send_from_directory(SCIBOT_GRAPHS_DIR, filename)
+
         logger.info("✅ SciBot module loaded")
     except Exception as e:
         logger.warning(f"⚠ SciBot module not available: {e}")
